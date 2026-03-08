@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: "CONFIG-SERVER"
+  profiles:
+    active: git
+  cloud:
+    config:
+      server:
+        git:
+           uri:
+           default-label: main
+           timeout: 5
+           clone-on-start: true
+           force-pull:  true
+  rabbit-mq:
+    host: 0.0.0.0
+    port: 5672
+    username: guest
+    password: guest
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    readiness-state:
+      enabled: true
+  endpoint:
+    health:
+      probes:
+        enabled: true
+encrypt:
+  key: "45D81EC1EF61DF9AD8D3E5BB397F9"
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
