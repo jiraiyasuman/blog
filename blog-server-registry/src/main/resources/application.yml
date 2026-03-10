@@ -1,30 +1,42 @@
 spring:
   application:
     name: SERVER-REGISTRY
+
   profiles:
     active: git
   config:
-    import: "optional:configserver:http://0.0.0.0:8671/eureka/"
-  rabbit-mq:
+    import: "optional:configserver:http://localhost:8071/"
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/jiraiyasuman/blog.git
+          default-label: main
+          timeout: 5
+          clone-on-start: true
+          force-pull: true
+
+  rabbitmq:
     host: 0.0.0.0
-    port: 5762
+    port: 5672
     username: guest
     password: guest
+
+server:
+  port: 8761
+
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-  health:
-    readinessstate:
-      enabled: true
+
   endpoint:
     health:
       probes:
         enabled: true
-server:
-  port: 8888
+
 eureka:
   client:
     register-with-eureka: false
-    fetch-registry: false  
+    fetch-registry: false

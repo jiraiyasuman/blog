@@ -7,7 +7,7 @@ spring:
     config:
       server:
         git:
-           uri:
+           uri: https://github.com/jiraiyasuman/blog.git
            default-label: main
            timeout: 5
            clone-on-start: true
@@ -32,8 +32,10 @@ management:
 encrypt:
   key: "45D81EC1EF61DF9AD8D3E5BB397F9"
 server:
-  port: 8761
+  port: 8888
 eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
