@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: "gatewayserver"
+  config:
+    import: "optional:configserver:http://0.0.0.0:8671/"
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+          lowerCaseServiceId: true
+  data:
+    redis:
+      host: 0.0.0.0
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      access: unrestricted
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: "gatewayserver"
+    description: "Blog Post/Like/Comment Gateway Server Application"
+    version: "1.0.0"
+
+logging:
+  level:
+    com:
+      blog:
+       blog_api_gateway: DEBUG
+server:
+  port: 8080
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false  
+
