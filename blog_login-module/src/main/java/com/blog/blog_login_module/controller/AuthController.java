@@ -13,6 +13,8 @@ import com.blog.blog_login_module.util.SnowflakeIdGenerator;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +27,7 @@ import java.util.Map;
 @RequestMapping("/auth/v1/blog-login")
 public class AuthController {
 
-    
+    private Logger log = LoggerFactory.getLogger(getClass().getName());
     private AuthService authService;
 
     private OtpService otpService;
@@ -51,10 +53,12 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
 
         if (userRepository.existsByUsername(request.getUsername())) {
+        	log.error("Username already exists");
             return ResponseEntity.badRequest().body("Username already exists");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
+        	log.error("Email already exists");
             return ResponseEntity.badRequest().body("Email already registered");
         }
 
@@ -68,7 +72,7 @@ public class AuthController {
         user.setRole("USER");
 
         userRepository.save(user);
-
+        log.info("User details saved successfully");
         return ResponseEntity.ok("User registered successfully");
     }
 
@@ -82,10 +86,11 @@ public class AuthController {
                     request.getPassword(),
                     httpRequest
             );
-
+            log.info("User logged in successfully");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+        	log.error("Some error has occured"+e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -98,10 +103,12 @@ public class AuthController {
                     request.getUsername(),
                     request.getOtp()
             );
+            log.info("Verify otp has been successfully done");
 
             return ResponseEntity.ok(tokens);
 
         } catch (Exception e) {
+        	log.error("Some error has occured"+e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -111,9 +118,11 @@ public class AuthController {
 
         try {
             otpService.resendOtp(request.getUsername());
+            log.info("Otp resent successfully");
             return ResponseEntity.ok("OTP resent successfully");
 
         } catch (Exception e) {
+        	log.error("Some error has occured"+e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -129,10 +138,12 @@ public class AuthController {
 
             Map<String, String> response = new HashMap<>();
             response.put("accessToken", newAccessToken);
+            log.info("Refresh Token successfully done");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
+        	log.error("Some error has occured"+e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -142,9 +153,11 @@ public class AuthController {
 
         try {
             authService.logout(request.getRefreshToken());
+            log.info("Logged out successfully");
             return ResponseEntity.ok("Logged out successfully");
 
         } catch (Exception e) {
+        	log.error("Some error has occured"+e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
