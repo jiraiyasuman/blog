@@ -3,8 +3,8 @@ package com.blog.blog_login_module.dto;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
-	private String username;
+public class OtpRequest {
+
 	private String email;
-	private String password;
+	private String otp;
 }

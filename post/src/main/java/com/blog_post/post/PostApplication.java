@@ -1,15 +1,14 @@
-package com.blog.blog_login_module;
+package com.blog_post.post;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-
-@SpringBootApplication
 @EnableDiscoveryClient
-public class BlogLoginModuleApplication {
+@SpringBootApplication
+public class PostApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BlogLoginModuleApplication.class, args);
+		SpringApplication.run(PostApplication.class, args);
 	}
 
 }

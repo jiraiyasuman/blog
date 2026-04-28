@@ -1,164 +1,150 @@
 package com.blog.blog_login_module.controller;
 
-import com.blog.blog_login_module.dto.LoginRequest;
-import com.blog.blog_login_module.dto.OtpResendRequest;
-import com.blog.blog_login_module.dto.OtpVerifyRequest;
-import com.blog.blog_login_module.dto.RefreshTokenRequest;
-import com.blog.blog_login_module.dto.RegisterRequest;
-import com.blog.blog_login_module.entity.User;
-import com.blog.blog_login_module.repository.UserRepository;
-import com.blog.blog_login_module.service.impl.AuthService;
-import com.blog.blog_login_module.service.impl.OtpService;
-import com.blog.blog_login_module.util.SnowflakeIdGenerator;
-
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.blog.blog_login_module.dto.LoginRequest;
+import com.blog.blog_login_module.dto.OtpRequest;
+import com.blog.blog_login_module.dto.RegisterRequest;
+import com.blog.blog_login_module.service.AuthCommandService;
+import com.blog.blog_login_module.service.AuthQueryService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+
 @RestController
-@RequestMapping("/auth/v1/blog-login")
+@RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private Logger log = LoggerFactory.getLogger(getClass().getName());
-    private AuthService authService;
+    private final AuthCommandService commandService;
+    private final AuthQueryService queryService;
 
-    private OtpService otpService;
-
-    private UserRepository userRepository;
-
-    private PasswordEncoder passwordEncoder;
-
-    private SnowflakeIdGenerator idGenerator;
-
-    @Autowired
-    public AuthController(AuthService authService, OtpService otpService, UserRepository userRepository,
-			PasswordEncoder passwordEncoder, SnowflakeIdGenerator idGenerator) {
-		super();
-		this.authService = authService;
-		this.otpService = otpService;
-		this.userRepository = userRepository;
-		this.passwordEncoder = passwordEncoder;
-		this.idGenerator = idGenerator;
-	}
-
-	@PostMapping("/register")
+    // ================= REGISTER =================
+    @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
 
-        if (userRepository.existsByUsername(request.getUsername())) {
-        	log.error("Username already exists");
-            return ResponseEntity.badRequest().body("Username already exists");
+            String response = commandService.register(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getPassword()
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of(
+                            "success", true,
+                            "message", response
+                    ));
+
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", ex.getMessage()
+            ));
         }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-        	log.error("Email already exists");
-            return ResponseEntity.badRequest().body("Email already registered");
-        }
-
-        User user = new User();
-        user.setId(idGenerator.nextId()); // Sharding key
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setAccountLocked(false);
-        user.setFailedAttempts(0);
-        user.setRole("USER");
-
-        userRepository.save(user);
-        log.info("User details saved successfully");
-        return ResponseEntity.ok("User registered successfully");
     }
 
+    // ================= LOGIN =================
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request,
-                                   HttpServletRequest httpRequest) {
-
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            String response = authService.login(
-                    request.getUsername(),
-                    request.getPassword(),
-                    httpRequest
-            );
-            log.info("User logged in successfully");
-            return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
-        	log.error("Some error has occured"+e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            String token = commandService.login(
+                    request.getUsername(),
+                    request.getPassword()
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "token", token
+            ));
+
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "success", false,
+                            "message", ex.getMessage()
+                    ));
         }
     }
 
+    // ================= VERIFY OTP =================
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerifyRequest request) {
+    public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest request) {
 
-        try {
-            Map<String, String> tokens = authService.verifyOtp(
-                    request.getUsername(),
-                    request.getOtp()
-            );
-            log.info("Verify otp has been successfully done");
+        boolean result = commandService.verifyOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
 
-            return ResponseEntity.ok(tokens);
-
-        } catch (Exception e) {
-        	log.error("Some error has occured"+e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+        if (result) {
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "OTP verified successfully"
+            ));
         }
+
+        return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Invalid or expired OTP"
+        ));
     }
 
+    // ================= RESEND OTP =================
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestBody OtpResendRequest request) {
-
+    public ResponseEntity<?> resendOtp(@RequestParam String email) {
         try {
-            otpService.resendOtp(request.getUsername());
-            log.info("Otp resent successfully");
-            return ResponseEntity.ok("OTP resent successfully");
 
-        } catch (Exception e) {
-        	log.error("Some error has occured"+e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            commandService.resendOtp(email);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "OTP resent successfully"
+            ));
+
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", ex.getMessage()
+            ));
         }
     }
 
-    
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-
-        try {
-            String newAccessToken = authService.refreshAccessToken(
-                    request.getRefreshToken()
-            );
-
-            Map<String, String> response = new HashMap<>();
-            response.put("accessToken", newAccessToken);
-            log.info("Refresh Token successfully done");
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-        	log.error("Some error has occured"+e);
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
+    // ================= LOGOUT =================
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<?> logout(HttpServletRequest request) {
 
-        try {
-            authService.logout(request.getRefreshToken());
-            log.info("Logged out successfully");
-            return ResponseEntity.ok("Logged out successfully");
+        String authHeader = request.getHeader("Authorization");
 
-        } catch (Exception e) {
-        	log.error("Some error has occured"+e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Invalid token"
+            ));
         }
+
+        String token = authHeader.substring(7);
+
+        String response = commandService.logout(token);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", response
+        ));
+    }
+
+    // ================= READ (CQRS QUERY) =================
+    @GetMapping("/user/{username}")
+    public ResponseEntity<?> getUser(@PathVariable String username) {
+        return ResponseEntity.ok(queryService.getUser(username));
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(queryService.getAllUsers());
     }
 }
