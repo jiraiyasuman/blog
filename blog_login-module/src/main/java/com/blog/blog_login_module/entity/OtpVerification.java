@@ -2,28 +2,39 @@ package com.blog.blog_login_module.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.Data;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Data
-public class OtpVerification {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name="id")
-	private long id;
-	@Column(name="email")
-	private String email;
-	@Column(name="otp")
-	private String otp;
-	@Column(name="expiry_time")
-	private LocalDateTime expiryTime;
-	@Column(name="resend_allowed_at")
-	private LocalDateTime resendAllowedAt;
-	@Column(name="verified")
-	private boolean verified;
+@Table(name = "otp_verification", indexes = {
+        @Index(name = "idx_otp_email", columnList = "email")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OtpVerification extends BaseModel {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String otp; // store hashed OTP if possible
+
+    @Column(name = "expiry_time", nullable = false)
+    private LocalDateTime expiryTime;
+
+    @Column(name = "resend_allowed_at")
+    private LocalDateTime resendAllowedAt;
+
+    private boolean verified;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserWrite user;
 }

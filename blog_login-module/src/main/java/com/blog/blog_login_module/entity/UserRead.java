@@ -1,23 +1,30 @@
 package com.blog.blog_login_module.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import lombok.Data;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Data
-public class UserRead {
+@Table(name = "users_read", indexes = {
+        @Index(name = "idx_users_read_email", columnList = "email"),
+        @Index(name = "idx_users_read_username", columnList = "username")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRead extends BaseModel {
 
-	@Id
-	@Column(name="id")
-	private long id;
-	@Column(name="username",unique=true)
-	private String username;
-	@Column(name="email",unique=true)
-	private String email;
-	@Column(name="enabled")
-	private boolean enabled;
-	@Column(name="locked")
-	private boolean locked;
+    @Id
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    private boolean enabled;
+
+    private boolean locked;
 }

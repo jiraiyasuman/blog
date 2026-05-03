@@ -27,7 +27,6 @@ public class MyUserDetails implements UserDetails{
         // Future: fetch from DB
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
-
     /**
      * PASSWORD 
      */

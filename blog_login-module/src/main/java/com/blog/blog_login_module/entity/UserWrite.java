@@ -1,40 +1,47 @@
 package com.blog.blog_login_module.entity;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name="users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_users_email", columnList = "email"),
+        @Index(name = "idx_users_username", columnList = "username"),
+        @Index(name = "idx_users_shard", columnList = "shard_key")
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserWrite {
+@Builder
+public class UserWrite extends BaseModel {
 
-	@Id
-	@Column(unique=true,name="id")
-	private long id;
-	@Column(name="email",unique=true)
-	private String email;
-	@Column(name="password")
-	private String password;
-	@Column(name="username",unique=true)
-	private String username;
-	@Column(name="enabled")
-	private boolean enabled;
-	@Column(name="locked")
-	private boolean locked;
-	@Column(name="lock_time")
-	private LocalDateTime lockTime;
-	@Column(name="failed_attempts")
-	private int failedAttempts;
-	@Column(name="shard_key")
-	private String shardKey;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password; // store BCrypt hash
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    private boolean enabled;
+
+    private boolean locked;
+
+    private LocalDateTime lockTime;
+
+    private int failedAttempts;
+
+    @Column(name = "shard_key", nullable = false)
+    private String shardKey;
+
+    @Version
+    private Integer version;
 }

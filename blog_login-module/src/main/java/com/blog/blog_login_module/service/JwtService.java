@@ -37,7 +37,9 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
-
+    public long extractExpirationMillis(String token) {
+        return extractExpiration(token).getTime();
+    }
     // 🔐 Generate Token
     public String generateToken(String username) {
 

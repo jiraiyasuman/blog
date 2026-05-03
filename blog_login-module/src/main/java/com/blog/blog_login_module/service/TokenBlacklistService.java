@@ -1,20 +1,33 @@
 package com.blog.blog_login_module.service;
 
+import java.time.Duration;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class TokenBlacklistService {
 
-    private final Set<String> blacklist = ConcurrentHashMap.newKeySet();
+    private final StringRedisTemplate redisTemplate;
 
-    public void blacklistToken(String token) {
-        blacklist.add(token);
+    private static final String PREFIX = "BLACKLIST_";
+
+    // Add token to blacklist
+    public void blacklistToken(String token, long expiryMillis) {
+
+        long ttl = expiryMillis - System.currentTimeMillis();
+
+        if (ttl > 0) {
+            redisTemplate.opsForValue()
+                    .set(PREFIX + token, "BLACKLISTED", Duration.ofMillis(ttl));
+        }
     }
 
+    // Check if token is blacklisted
     public boolean isBlacklisted(String token) {
-        return blacklist.contains(token);
+        return redisTemplate.hasKey(PREFIX + token);
     }
 }
